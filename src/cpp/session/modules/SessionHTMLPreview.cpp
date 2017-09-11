@@ -1047,7 +1047,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
       // we need to give the first event time to be delivered so that
       // the preview succeeded event handler is set up
       using namespace boost::posix_time;
-      boost::this_thread::sleep(milliseconds(500));
+      boost::this_thread::sleep(milliseconds(100));
 
       // emit html preview completed event
       enqueHTMLPreviewSucceeded(
