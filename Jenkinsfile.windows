@@ -24,6 +24,7 @@ pipeline {
 
           // pull :latest image, build using that as cache, push if master
           container = pullBuildPush(
+            dockerfile: "docker/jenkins/Dockerfile.windows14",
             cache_tag: 'latest',
             image_name: 'jenkins/ide-windows',
             image_tag: '1.4'
