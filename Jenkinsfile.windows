@@ -1,5 +1,7 @@
+def container
+
 pipeline {
-  agent { label 'windows-v1.4' }
+  agent { label 'windows' }
   options {
     timestamps()
     disableConcurrentBuilds()
@@ -14,17 +16,39 @@ pipeline {
   }
 
   stages {
+    stage('build container') {
+      steps {
+        script {
+          // check if we're on master, push docker image if so.
+          isMasterBranch  = (env.BRANCH_NAME == 'master')
+
+          // pull :latest image, build using that as cache, push if master
+          container = pullBuildPush(
+            cache_tag: 'latest',
+            image_name: 'jenkins/ide-windows',
+            image_tag: '1.4'
+            latest_tag: true,
+            push: isMasterBranch
+          )
+        }
+      }
+    }
     stage('dependencies') {
       steps {
-        withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
-          bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
-        }
+        script {
+          container.inside(){
+            withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
+              bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
+            }
+          }
       }
     }
     stage('build'){
       steps {
         script {
-          bat 'cd package/win32 && set "PACKAGE_OS=Windows" && make-package.bat clean && cd ../..'
+          container.inside(){
+            bat 'cd package/win32 && set "PACKAGE_OS=Windows" && make-package.bat clean && cd ../..'
+          }
         }
       }
     }
